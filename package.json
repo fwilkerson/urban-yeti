@@ -1,0 +1,37 @@
+{
+	"name": "urban-yeti",
+	"version": "1.0.0",
+	"description": "Reliable messaging?",
+	"main": "src/index.js",
+	"scripts": {
+		"coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
+		"tdd": "ava -w -v --fail-fast",
+		"test": "xo && nyc ava"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fwilkerson/urban-yeti.git"
+	},
+	"author": "Frank A. Wilkerson",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/fwilkerson/urban-yeti/issues"
+	},
+	"homepage": "https://github.com/fwilkerson/urban-yeti#readme",
+	"devDependencies": {
+		"ava": "^0.25.0",
+		"codecov": "^3.0.0",
+		"nyc": "^11.4.1",
+		"prettier": "^1.10.2",
+		"xo": "^0.20.2"
+	},
+	"prettier": {
+		"bracketSpacing": false,
+		"singleQuote": true,
+		"trailingComma": "es5",
+		"useTabs": true
+	},
+	"xo": {
+		"prettier": true
+	}
+}
