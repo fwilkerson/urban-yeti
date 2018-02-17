@@ -2,11 +2,15 @@
 	"name": "urban-yeti",
 	"version": "1.0.0",
 	"description": "Reliable messaging?",
-	"main": "src/index.js",
+	"umd:main": "dist/urban-yeti.min.js",
+	"module": "dist/urban-yeti.es.js",
+	"main": "dist/urban-yeti.js",
 	"scripts": {
 		"coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
-		"tdd": "ava -w -v --fail-fast",
-		"test": "xo && nyc ava"
+		"tdd": "run-p watch:*",
+		"test": "microbundle && xo && nyc ava",
+		"watch:build": "microbundle watch",
+		"watch:tests": "ava -w -v --fail-fast"
 	},
 	"repository": {
 		"type": "git",
@@ -18,9 +22,14 @@
 		"url": "https://github.com/fwilkerson/urban-yeti/issues"
 	},
 	"homepage": "https://github.com/fwilkerson/urban-yeti#readme",
+	"dependencies": {
+		"sockette": "^2.0.0"
+	},
 	"devDependencies": {
 		"ava": "^0.25.0",
 		"codecov": "^3.0.0",
+		"microbundle": "^0.4.3",
+		"npm-run-all": "^4.1.2",
 		"nyc": "^11.4.1",
 		"prettier": "^1.10.2",
 		"xo": "^0.20.2"
@@ -34,7 +43,7 @@
 	"xo": {
 		"prettier": true
 	},
-	"dependencies": {
-		"sockette": "^2.0.0"
+	"ava": {
+		"source": ["dist/**/*.js", "src/__tests__/**/*.js"]
 	}
 }

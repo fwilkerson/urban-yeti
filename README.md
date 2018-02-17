@@ -14,6 +14,7 @@
 3. ~~Transform events with map~~
 4. ~~Attempt to reonnect the socket~~
    * Using [Sockette](https://github.com/lukeed/sockette)
-5. On reconnect ask the server to send what you missed
+5. ~~Allow user to throttle incoming socket messages~~
+6. On reconnect ask the server to send what you missed
 
 ## Documentation

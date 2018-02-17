@@ -1,7 +1,12 @@
-const Sockette = require('sockette');
+import Sockette from 'sockette';
 
-exports.Observe = function(url, opts = {}) {
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+export default function(url, opts = {}) {
 	let sub;
+	let last;
+	let throttleTime;
+	let throttled = false;
 
 	const self = this;
 	const mods = [];
@@ -14,7 +19,7 @@ exports.Observe = function(url, opts = {}) {
 		onmessage: next,
 	});
 
-	function next(e) {
+	function _next(e) {
 		let pass = true;
 		mods.forEach(mod => {
 			switch (mod.type) { // eslint-disable-line default-case
@@ -35,6 +40,25 @@ exports.Observe = function(url, opts = {}) {
 		else msgs.push(e);
 	}
 
+	function next(e) {
+		if (!throttleTime) return _next(e);
+
+		if (throttled) {
+			last = e;
+		} else {
+			throttled = true;
+			sleep(throttleTime).then(() => {
+				throttled = false;
+				_next(last);
+			});
+		}
+	}
+
+	self.throttle = ms => {
+		throttleTime = ms;
+		return self;
+	};
+
 	self.map = func => {
 		mods.push({type: 'MAP', func});
 		return self;
@@ -54,4 +78,4 @@ exports.Observe = function(url, opts = {}) {
 	};
 
 	return self;
-};
+}
