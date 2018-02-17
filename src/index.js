@@ -1,11 +1,18 @@
-exports.Observe = function(ws) {
+const Sockette = require('sockette');
+
+exports.Observe = function(url, opts = {}) {
 	let sub;
 
 	const self = this;
 	const mods = [];
 	const msgs = [];
 
-	ws.addEventListener('message', next);
+	// eslint-disable-next-line no-unused-vars
+	const ws = new Sockette(url, {
+		timeout: opts.timeout,
+		maxAttempts: opts.maxAttempts,
+		onmessage: next,
+	});
 
 	function next(e) {
 		let pass = true;

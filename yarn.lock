@@ -3907,6 +3907,10 @@ sntp@1.x.x:
   dependencies:
     hoek "2.x.x"
 
+sockette@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/sockette/-/sockette-2.0.0.tgz#3da2f3459288d55cedcb6de580aeae68ae4554fc"
+
 sort-keys@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/sort-keys/-/sort-keys-2.0.0.tgz#658535584861ec97d730d6cf41822e1f56684128"
