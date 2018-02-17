@@ -17,15 +17,16 @@ const send = e => {
 	process.emit('fake-message', e);
 };
 
-test('contrsuctor', t => {
-	const obs = new UrbanYeti('url');
+let obs;
+test.beforeEach(() => {
+	obs = new UrbanYeti('url');
+});
 
+test('contrsuctor', t => {
 	t.true(obs && typeof obs === 'object');
 });
 
 test('properties', t => {
-	const obs = new UrbanYeti('url');
-
 	t.true('subscribe' in obs);
 	t.true(typeof obs.subscribe === 'function');
 	t.true('filter' in obs);
@@ -36,7 +37,6 @@ test('properties', t => {
 
 test.cb('subscribe : websocket message', t => {
 	const event = {data: 'hello'};
-	const obs = new UrbanYeti('url');
 
 	obs.subscribe(e => {
 		t.true(e === event);
@@ -47,8 +47,6 @@ test.cb('subscribe : websocket message', t => {
 
 test('subscribe : gets hit for every message', t => {
 	t.plan(3);
-
-	const obs = new UrbanYeti('url');
 
 	for (let i = 0; i < 3; i++) {
 		send(i);
@@ -61,8 +59,6 @@ test('subscribe : gets hit for every message', t => {
 test('subscribe : does not care if message happens before or after', t => {
 	t.plan(2);
 
-	const obs = new UrbanYeti('url');
-
 	send('before');
 	obs.subscribe(e => {
 		t.true(typeof e === 'string');
@@ -73,8 +69,6 @@ test('subscribe : does not care if message happens before or after', t => {
 test('subscribe : messages can be filtered', t => {
 	t.plan(1);
 
-	const obs = new UrbanYeti('url');
-
 	for (let i = 0; i < 3; i++) {
 		send(i);
 	}
@@ -84,8 +78,6 @@ test('subscribe : messages can be filtered', t => {
 });
 
 test.cb('subscribe : messages can be transformed with map', t => {
-	const obs = new UrbanYeti('url');
-
 	send(JSON.stringify({data: 'hello'}));
 	obs.map(e => JSON.parse(e)).subscribe(e => {
 		t.true(typeof e === 'object');
@@ -96,8 +88,6 @@ test.cb('subscribe : messages can be transformed with map', t => {
 
 test('subscribe : messages can be mapped and filtered', t => {
 	t.plan(2);
-
-	const obs = new UrbanYeti('url');
 
 	for (let i = 0; i < 3; i++) {
 		send(i);
@@ -111,8 +101,6 @@ test('subscribe : messages can be mapped and filtered', t => {
 });
 
 test.cb('subscribe : messages can be filtered and mapped', t => {
-	const obs = new UrbanYeti('url');
-
 	for (let i = 0; i < 3; i++) {
 		send(i);
 	}
@@ -126,8 +114,6 @@ test.cb('subscribe : messages can be filtered and mapped', t => {
 });
 
 test.cb('subscribe : messages can be throttled', t => {
-	const obs = new UrbanYeti('url');
-
 	obs.throttle(1e2).subscribe(e => {
 		t.true(e === 2);
 		t.end();
@@ -139,8 +125,6 @@ test.cb('subscribe : messages can be throttled', t => {
 });
 
 test.cb('subscribe : messages can be throttled, even prior to subscribe', t => {
-	const obs = new UrbanYeti('url');
-
 	for (let i = 0; i < 3; i++) {
 		send(i);
 	}
@@ -149,4 +133,94 @@ test.cb('subscribe : messages can be throttled, even prior to subscribe', t => {
 		t.true(e === 2);
 		t.end();
 	});
+});
+
+test.serial.cb('subscribe : throttled messages can be batched', t => {
+	obs.throttle(1e2, true).subscribe(e => {
+		t.true(Array.isArray(e));
+		t.true(e.length === 3);
+		t.end();
+	});
+
+	for (let i = 0; i < 3; i++) {
+		send(i);
+	}
+});
+
+test.serial.cb('throttled messages are batched even prior to subscribe', t => {
+	for (let i = 0; i < 3; i++) {
+		send(i);
+	}
+
+	obs.throttle(1e2, true).subscribe(e => {
+		t.true(Array.isArray(e));
+		t.true(e.length === 3);
+		t.end();
+	});
+});
+
+test.serial.cb('throttle, map, filter', t => {
+	obs
+		.throttle(1e2)
+		.map(e => e.data)
+		.filter(e => e !== 'world')
+		.subscribe(e => {
+			t.true(e === 'hello');
+			t.end();
+		});
+
+	send({data: 'hello!'});
+	send({data: 'world'});
+	send({data: 'hello'});
+	send({data: 'world'});
+});
+
+test.serial.cb('throttle, map, filter, prior to subscribe', t => {
+	send({data: 'hello!'});
+	send({data: 'world'});
+	send({data: 'hello'});
+	send({data: 'world'});
+
+	obs
+		.throttle(1e2)
+		.map(e => e.data)
+		.filter(e => typeof e === 'string' && e.includes('hello'))
+		.subscribe(e => {
+			t.true(e === 'hello');
+			t.end();
+		});
+});
+
+test.serial.cb('batch throttle, map, filter', t => {
+	obs
+		.throttle(1e2, true)
+		.map(e => e.data)
+		.filter(e => e !== 'world')
+		.subscribe(e => {
+			t.true(Array.isArray(e));
+			t.true(e.length === 2);
+			t.end();
+		});
+
+	send({data: 'hello!'});
+	send({data: 'world'});
+	send({data: 'hello'});
+	send({data: 'world'});
+});
+
+test.serial.cb('batch throttle, map, filter, prior to subscribe', t => {
+	send({data: 'hello!'});
+	send({data: 'world'});
+	send({data: 'hello'});
+	send({data: 'world'});
+
+	obs
+		.throttle(1e2, true)
+		.map(e => e.data)
+		.filter(e => e !== 'world')
+		.subscribe(e => {
+			t.true(Array.isArray(e));
+			t.true(e.length === 2);
+			t.end();
+		});
 });
