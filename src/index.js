@@ -7,10 +7,11 @@ export default function(url, opts = {}) {
 	let last;
 	let throttleTime;
 	let throttled = false;
+	let batched = false;
+	let msgs = [];
 
 	const self = this;
 	const mods = [];
-	const msgs = [];
 
 	// eslint-disable-next-line no-unused-vars
 	const ws = new Sockette(url, {
@@ -19,8 +20,9 @@ export default function(url, opts = {}) {
 		onmessage: next,
 	});
 
-	function _next(e) {
+	function applyMods(e) {
 		let pass = true;
+
 		mods.forEach(mod => {
 			switch (mod.type) { // eslint-disable-line default-case
 				case 'MAP':
@@ -32,30 +34,36 @@ export default function(url, opts = {}) {
 			}
 		});
 
-		// Check if the event passed the filter
-		if (!pass) return;
+		if (!pass) return undefined;
 
-		// Notify subscriber or queue the event
-		if (typeof sub === 'function') sub(e);
-		else msgs.push(e);
+		return e;
 	}
 
 	function next(e) {
-		if (!throttleTime) return _next(e);
+		if (!sub) return msgs.push(e);
 
-		if (throttled) {
-			last = e;
-		} else {
+		e = applyMods(e);
+
+		if (e === undefined) return;
+
+		if (!throttleTime) return sub(e);
+
+		if (batched) msgs.push(e);
+		else last = e;
+
+		if (!throttled) {
 			throttled = true;
 			sleep(throttleTime).then(() => {
 				throttled = false;
-				_next(last);
+				sub(batched ? msgs : last);
+				if (batched) msgs = [];
 			});
 		}
 	}
 
-	self.throttle = ms => {
+	self.throttle = (ms, batch = false) => {
 		throttleTime = ms;
+		batched = batch;
 		return self;
 	};
 
@@ -72,7 +80,15 @@ export default function(url, opts = {}) {
 	self.subscribe = func => {
 		sub = func;
 		if (msgs.length > 0) {
-			msgs.forEach(msg => next(msg));
+			if (batched) {
+				msgs = msgs.reduce((acc, n) => {
+					n = applyMods(n);
+					if (n !== undefined) acc.push(n);
+					return acc;
+				}, []);
+				sub(msgs);
+				msgs = [];
+			} else msgs.forEach(msg => next(msg));
 		}
 		return self;
 	};

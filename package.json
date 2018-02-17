@@ -44,6 +44,6 @@
 		"prettier": true
 	},
 	"ava": {
-		"source": ["dist/**/*.js", "src/__tests__/**/*.js"]
+		"source": ["dist/urban-yeti.js", "src/__tests__/**/*.js"]
 	}
 }
