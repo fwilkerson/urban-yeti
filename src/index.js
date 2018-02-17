@@ -19,19 +19,7 @@ export default function(url, opts = {}) {
 		onmessage: next,
 	});
 
-	async function next(e) {
-		if (throttleTime) {
-			if (throttled) {
-				last = e;
-				return;
-			}
-
-			throttled = true;
-			await sleep(throttleTime);
-			throttled = false;
-			e = last;
-		}
-
+	function _next(e) {
 		let pass = true;
 		mods.forEach(mod => {
 			switch (mod.type) { // eslint-disable-line default-case
@@ -50,6 +38,20 @@ export default function(url, opts = {}) {
 		// Notify subscriber or queue the event
 		if (typeof sub === 'function') sub(e);
 		else msgs.push(e);
+	}
+
+	function next(e) {
+		if (!throttleTime) return _next(e);
+
+		if (throttled) {
+			last = e;
+		} else {
+			throttled = true;
+			sleep(throttleTime).then(() => {
+				throttled = false;
+				_next(last);
+			});
+		}
 	}
 
 	self.throttle = ms => {
